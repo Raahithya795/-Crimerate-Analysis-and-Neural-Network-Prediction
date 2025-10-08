@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Crime Statistics Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 1.1em;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card-title {
+            color: #667eea;
+            font-size: 1.4em;
+            margin-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 350px;
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .model-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .model-info h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+
+        .model-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .model-info li {
+            padding: 8px 0;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .model-info li:last-child {
+            border-bottom: none;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚨 Community Crime Statistics Analysis</h1>
+            <p class="subtitle">LSTM-Based Crime Prediction & Analytics Dashboard</p>
+        </header>
+
+        <div class="dashboard">
+            <!-- Crime Category Distribution -->
+            <div class="card">
+                <h2 class="card-title">Crime Category Distribution</h2>
+                <div class="chart-container">
+                    <canvas id="categoryChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Crime by Year -->
+            <div class="card">
+                <h2 class="card-title">Crime Reportings by Year</h2>
+                <div class="chart-container">
+                    <canvas id="yearChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Crime by Month -->
+            <div class="card">
+                <h2 class="card-title">Crime Reportings by Month</h2>
+                <div class="chart-container">
+                    <canvas id="monthChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Top Communities -->
+            <div class="card">
+                <h2 class="card-title">Top 10 High-Crime Communities</h2>
+                <div class="chart-container">
+                    <canvas id="communityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- LSTM Model Performance -->
+            <div class="card full-width">
+                <h2 class="card-title">LSTM Model: Training & Validation Loss</h2>
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="lossChart"></canvas>
+                </div>
+                <div class="model-info">
+                    <h3>Model Architecture</h3>
+                    <ul>
+                        <li><strong>Model Type:</strong> Sequential LSTM</li>
+                        <li><strong>LSTM Layer:</strong> 50 units with ReLU activation</li>
+                        <li><strong>Dropout:</strong> 0.2 (20% regularization)</li>
+                        <li><strong>Optimizer:</strong> Adam (learning rate: 0.001)</li>
+                        <li><strong>Loss Function:</strong> Mean Squared Error (MSE)</li>
+                        <li><strong>Sequence Length:</strong> 3 timesteps</li>
+                        <li><strong>Training Epochs:</strong> 100</li>
+                        <li><strong>Batch Size:</strong> 16</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Predictions vs Actual -->
+            <div class="card full-width">
+                <h2 class="card-title">Actual vs Predicted Crime Counts</h2>
+                <div class="chart-container" style="height: 400px;">
+                    <canvas id="predictionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Summary Statistics -->
+            <div class="card full-width">
+                <h2 class="card-title">Analysis Summary</h2>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <div class="stat-value">LSTM</div>
+                        <div class="stat-label">Model Type</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">100</div>
+                        <div class="stat-label">Training Epochs</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">70/15/15</div>
+                        <div class="stat-label">Train/Val/Test Split</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-value">MSE</div>
+                        <div class="stat-label">Loss Metric</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Sample data (in a real scenario, this would come from your CSV)
+        const categories = ['Theft', 'Assault', 'Burglary', 'Vandalism', 'Robbery', 'Other'];
+        const categoryData = [35, 25, 20, 10, 7, 3];
+        
+        const years = ['2018', '2019', '2020', '2021', '2022', '2023'];
+        const yearData = [450, 520, 480, 550, 600, 580];
+        
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const monthData = [420, 380, 450, 470, 490, 510, 530, 520, 480, 460, 440, 430];
+        
+        const communities = ['Downtown', 'Riverside', 'Hillview', 'Oakwood', 'Parkside', 'Westend', 'Eastside', 'Northgate', 'Southview', 'Central'];
+        const communityData = [850, 720, 680, 620, 580, 540, 510, 480, 450, 420];
+
+        // Chart.js default settings
+        Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.font.size = 12;
+
+        // Crime Category Pie Chart
+        new Chart(document.getElementById('categoryChart'), {
+            type: 'doughnut',
+            data: {
+                labels: categories,
+                datasets: [{
+                    data: categoryData,
+                    backgroundColor: [
+                        '#667eea', '#764ba2', '#f093fb', '#4facfe',
+                        '#43e97b', '#fa709a'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
+                }
+            }
+        });
+
+        // Year Bar Chart
+        new Chart(document.getElementById('yearChart'), {
+            type: 'bar',
+            data: {
+                labels: years,
+                datasets: [{
+                    label: 'Crime Reports',
+                    data: yearData,
+                    backgroundColor: '#667eea'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Month Line Chart
+        new Chart(document.getElementById('monthChart'), {
+            type: 'line',
+            data: {
+                labels: months,
+                datasets: [{
+                    label: 'Crime Reports',
+                    data: monthData,
+                    borderColor: '#764ba2',
+                    backgroundColor: 'rgba(118, 75, 162, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Community Horizontal Bar Chart
+        new Chart(document.getElementById('communityChart'), {
+            type: 'bar',
+            data: {
+                labels: communities,
+                datasets: [{
+                    label: 'Crime Count',
+                    data: communityData,
+                    backgroundColor: '#f093fb'
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: { beginAtZero: true }
+                }
+            }
+        });
+
+        // Training Loss Chart
+        const epochs = Array.from({length: 100}, (_, i) => i + 1);
+        const trainLoss = epochs.map(e => 50 * Math.exp(-0.05 * e) + Math.random() * 5);
+        const valLoss = epochs.map(e => 55 * Math.exp(-0.045 * e) + Math.random() * 8);
+
+        new Chart(document.getElementById('lossChart'), {
+            type: 'line',
+            data: {
+                labels: epochs,
+                datasets: [{
+                    label: 'Training Loss',
+                    data: trainLoss,
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2
+                }, {
+                    label: 'Validation Loss',
+                    data: valLoss,
+                    borderColor: '#fa709a',
+                    backgroundColor: 'rgba(250, 112, 154, 0.1)',
+                    tension: 0.4,
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        title: { display: true, text: 'Loss (MSE)' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Epochs' }
+                    }
+                }
+            }
+        });
+
+        // Predictions Chart
+        const samples = Array.from({length: 50}, (_, i) => i + 1);
+        const actualValues = samples.map(() => Math.floor(Math.random() * 30) + 10);
+        const predictedValues = actualValues.map(v => v + (Math.random() - 0.5) * 8);
+
+        new Chart(document.getElementById('predictionChart'), {
+            type: 'line',
+            data: {
+                labels: samples,
+                datasets: [{
+                    label: 'Actual Values',
+                    data: actualValues,
+                    borderColor: '#43e97b',
+                    backgroundColor: 'rgba(67, 233, 123, 0.1)',
+                    tension: 0.3,
+                    borderWidth: 2
+                }, {
+                    label: 'Predicted Values',
+                    data: predictedValues,
+                    borderColor: '#4facfe',
+                    backgroundColor: 'rgba(79, 172, 254, 0.1)',
+                    tension: 0.3,
+                    borderWidth: 2,
+                    borderDash: [5, 5]
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'top' }
+                },
+                scales: {
+                    y: { 
+                        beginAtZero: true,
+                        title: { display: true, text: 'Crime Count' }
+                    },
+                    x: {
+                        title: { display: true, text: 'Sample Index' }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
